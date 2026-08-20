@@ -6,7 +6,8 @@ from langgraph.graph import START,END,StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode,tools_condition
 
-from alerts.mock_ops.tools import get_logs as _get_logs ,get_metrics as _get_metrics 
+from state import IncidentState
+from process.mock_ops.tools import get_logs as _get_logs ,get_metrics as _get_metrics 
 from models import Hypothesis
 
 @tool
@@ -21,11 +22,11 @@ def get_metrics(service : str) -> dict:
 
 TOOLS = [get_logs,get_metrics]
 
-class TriageState(TypedDict):
-    messages : Annotated[list[AnyMessage],add_messages]
-    alert : str
-    hypothesis : Optional[Hypothesis]
-    timeline : list[str]
+# class TriageState(TypedDict):
+#     messages : Annotated[list[AnyMessage],add_messages]
+#     alert : str
+#     hypothesis : Optional[Hypothesis]
+#     timeline : list[str]
 
 llm = ChatGroq(model="openai/gpt-oss-120b",temperature=0)
 llm_with_tools = llm.bind_tools(TOOLS)
@@ -38,14 +39,14 @@ SYSTEM_PROMPT = (
     "to call it again."
 )
 
-def triage_agent(state : TriageState) -> dict :
+def triage_agent(state : IncidentState) -> dict :
     messages = state["messages"]
     if not messages :
         messages = [SystemMessage(SYSTEM_PROMPT) , HumanMessage(state["alert"])]
     response = llm_with_tools.invoke(messages)
     return {"messages" : [response]}
 
-def summarize_hypothesis(state : TriageState) -> dict :
+def summarize_hypothesis(state : IncidentState) -> dict :
     hypothesis = llm_structured.invoke(
         state["messages"]+[HumanMessage("Based on everything above, give your final hypothesis.")]
     )
