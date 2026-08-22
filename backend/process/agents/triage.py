@@ -40,11 +40,24 @@ SYSTEM_PROMPT = (
     "to call it again."
 )
 
+
+
 def triage_agent(state : IncidentState) -> dict :
+
     messages = state["messages"]
+    
     if not messages :
-        messages = [SystemMessage(SYSTEM_PROMPT) , HumanMessage(state["alert"])]
+        messages = [SystemMessage(content=SYSTEM_PROMPT) , HumanMessage(content=state["alert"])]
     response = llm_with_tools.invoke(messages)
+
+    if not state["messages"]:
+        return {
+            "messages" : [
+                SystemMessage(content=SYSTEM_PROMPT),
+                HumanMessage(content=state["alert"]),
+                response,
+            ]
+        }
     return {"messages" : [response]}
 
 def summarize_hypothesis(state : IncidentState) -> dict :
