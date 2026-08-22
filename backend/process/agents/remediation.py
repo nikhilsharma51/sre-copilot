@@ -1,14 +1,15 @@
 from langchain_core.messages import HumanMessage
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.types import interrupt
+import os
 
-from mock_ops.tools import restart_service as _restart_service
+from process.mock_ops.tools import restart_service as _restart_service
 from models import RemediationProposal
 from state import IncidentState
 
 ALLOWED_ACTIONS = {"restart_service"}
 
-remediation_llm = ChatGroq(model="",temperature=0)
+remediation_llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash",api_key=os.getenv("GEMINI_API_KEY"))
 remediation_structured = remediation_llm.with_structured_output(RemediationProposal)
 
 PROPOSAL_PROMPT = (
@@ -23,9 +24,9 @@ def propose_remediation(state:IncidentState) -> dict:
     hyp = state["hypothesis"]
     prompt = (
         f"{PROPOSAL_PROMPT}\n\n"
-        f"Hypothesis: {hyp['root_cause']}\n"
-        f"Evidence: {hyp['evidence']}\n"
-        f"Confidence: {hyp['confidence']}"
+        f"Hypothesis: {hyp.root_cause}\n"
+        f"Evidence: {hyp.evidence}\n"
+        f"Confidence: {hyp.confidence}"
     )
 
     proposal = remediation_structured.invoke([HumanMessage(prompt)]).model_dump()

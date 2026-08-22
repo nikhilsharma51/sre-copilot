@@ -1,10 +1,11 @@
 from typing import Annotated,TypedDict,Optional
 from langchain_core.messages import AnyMessage,HumanMessage,SystemMessage
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq,chat_models
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import START,END,StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode,tools_condition
+import os
 
 from state import IncidentState
 from process.mock_ops.tools import get_logs as _get_logs ,get_metrics as _get_metrics 
@@ -28,7 +29,7 @@ TOOLS = [get_logs,get_metrics]
 #     hypothesis : Optional[Hypothesis]
 #     timeline : list[str]
 
-llm = ChatGroq(model="openai/gpt-oss-120b",temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash",temperature=0,api_key=os.getenv("GEMINI_API_KEY"))
 llm_with_tools = llm.bind_tools(TOOLS)
 llm_structured = llm.with_structured_output(Hypothesis)
 
@@ -56,7 +57,7 @@ def summarize_hypothesis(state : IncidentState) -> dict :
     }
 
 def build_triage_graph():
-    graph = StateGraph(TriageState)
+    graph = StateGraph(IncidentState)
     graph.add_node("triage_agent", triage_agent)
     graph.add_node("tools", ToolNode(TOOLS))
     graph.add_node("summarize_hypothesis", summarize_hypothesis)
