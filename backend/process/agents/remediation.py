@@ -1,16 +1,20 @@
 from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langgraph.types import interrupt
 import os
+MODEL_NAME = os.getenv("MODEL")
 
 from process.mock_ops.tools import restart_service as _restart_service
 from models import RemediationProposal
 from state import IncidentState
+from dotenv import load_dotenv
+load_dotenv()
 
 ALLOWED_ACTIONS = {"restart_service"}
 
-remediation_llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash",api_key=os.getenv("GEMINI_API_KEY"))
-remediation_structured = remediation_llm.with_structured_output(RemediationProposal)
+remediation_llm = ChatGroq(model=MODEL_NAME,temperature=0)
+remediation_structured = remediation_llm.with_structured_output(RemediationProposal,
+                                                                method="json_schema")
 
 PROPOSAL_PROMPT = (
      "You are the remediation half of an SRE copilot. Given the triage "

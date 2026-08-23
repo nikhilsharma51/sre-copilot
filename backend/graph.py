@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph,START,END
-from langgraph.store.memory import InMemoryStore
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 from state import IncidentState
 from process.agents.triage import build_triage_graph
@@ -7,8 +7,8 @@ from process.agents.remediation import propose_remediation,human_approval,execut
 from guardrails import guardrail_check
 
 
-checkpointer = InMemoryStore()
-store = InMemoryStore()
+checkpointer = SqliteSaver
+Store = SqliteSaver
 
 def route_after_guardrail(state : IncidentState) -> str:
     return "human_approval" if state["guardrail_result"]["allowed"] else "stop_incident"
@@ -43,4 +43,4 @@ def build_incident_graph(checkpointer=None):
     graph.add_edge("execute_action", END)
     graph.add_edge("stop_incident", END)
 
-    return graph.compile(checkpointer=checkpointer,store=store)
+    return graph.compile(checkpointer=checkpointer,store=Store)

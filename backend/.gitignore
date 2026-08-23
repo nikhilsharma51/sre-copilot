@@ -5,3 +5,5 @@ __pycache__
 /__pycache__
 incidents.db
 incident.db
+*.db
+*__pycache__

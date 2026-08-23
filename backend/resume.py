@@ -7,7 +7,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.types import Command
 from graph import build_incident_graph
 
-DB_PATH = "incidents.db"
+DB_PATH = "incident.db"
 
 def main():
     if len(sys.argv) < 3:

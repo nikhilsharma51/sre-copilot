@@ -1,11 +1,15 @@
+import os
 from typing import Annotated,TypedDict,Optional
 from langchain_core.messages import AnyMessage,HumanMessage,SystemMessage
 from langchain_core.tools import tool
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langgraph.graph import START,END,StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode,tools_condition
-import os
+
+MODEL_NAME = os.getenv("MODEL")
+from dotenv import load_dotenv
+load_dotenv()
 
 from state import IncidentState
 from process.mock_ops.tools import get_logs as _get_logs ,get_metrics as _get_metrics 
@@ -29,9 +33,9 @@ TOOLS = [get_logs,get_metrics]
 #     hypothesis : Optional[Hypothesis]
 #     timeline : list[str]
 
-llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash",temperature=0,api_key=os.getenv("GEMINI_API_KEY"))
+llm = ChatGroq(model=MODEL_NAME,temperature=0)
 llm_with_tools = llm.bind_tools(TOOLS)
-llm_structured = llm.with_structured_output(Hypothesis)
+llm_structured = llm.with_structured_output(Hypothesis,method="json_schema")
 
 SYSTEM_PROMPT = (
     "You are an SRE triage agent investigating a production alert. "
@@ -45,9 +49,10 @@ SYSTEM_PROMPT = (
 def triage_agent(state : IncidentState) -> dict :
 
     messages = state["messages"]
+    humMess = state["alert"]
     
     if not messages :
-        messages = [SystemMessage(content=SYSTEM_PROMPT) , HumanMessage(content=state["alert"])]
+        messages = [SystemMessage(content=SYSTEM_PROMPT) , HumanMessage(content=humMess)]
     response = llm_with_tools.invoke(messages)
 
     if not state["messages"]:
