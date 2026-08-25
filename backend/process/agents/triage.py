@@ -1,11 +1,14 @@
 import os
-from typing import Annotated,TypedDict,Optional
+from typing import Annotated,TypedDict,Optional,cast
 from langchain_core.messages import AnyMessage,HumanMessage,SystemMessage
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langgraph.graph import START,END,StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode,tools_condition
+
+from mcp_client import call_mcp_tool
+
 
 MODEL_NAME = os.getenv("MODEL")
 from dotenv import load_dotenv
@@ -16,14 +19,18 @@ from process.mock_ops.tools import get_logs as _get_logs ,get_metrics as _get_me
 from models import Hypothesis
 
 @tool
-def get_logs(service : str) -> list[str]:
+async def get_logs(service : str) -> list[str]:
     """Get recent log lines for a service."""
-    return _get_logs(service)
+    result = await call_mcp_tool("get_logs",{"service":service})
+
+    return cast(list[str],result)
 
 @tool
-def get_metrics(service : str) -> dict:
+async def get_metrics(service : str) -> dict:
     """Get the current metrics snapshot for a service."""
-    return _get_metrics(service)
+    result = await call_mcp_tool("get_metrics",{"service":service})
+
+    return cast(dict,result) 
 
 TOOLS = [get_logs,get_metrics]
 

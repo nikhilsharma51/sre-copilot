@@ -7,6 +7,7 @@ MODEL_NAME = os.getenv("MODEL")
 from process.mock_ops.tools import restart_service as _restart_service
 from models import RemediationProposal
 from state import IncidentState
+from mcp_client import call_mcp_tool
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -59,10 +60,11 @@ def human_approval(state: IncidentState) -> dict:
         update["stop_reason"] = note or "human denied th proposed action"
     return update         
 
-def execute_action(state: IncidentState) -> dict:
+
+async def execute_action(state: IncidentState) -> dict:
     proposal = state["proposal"]
     if proposal["action"] == "restart_service":
-        result = _restart_service(proposal["target"])
+        result = await call_mcp_tool("restart_service", {"service": proposal["target"]})
     else:
         result = {"status": "error", "detail": f"no executor wired for action '{proposal['action']}'"}
     return {
