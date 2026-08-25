@@ -22,10 +22,10 @@ def render_report(state: IncidentState, interrupted: bool = False) -> str:
     hyp = state.get("hypothesis")
     if hyp:
         lines.append("--- Triage ---")
-        lines.append(f"Hypothesis:  {hyp['root_cause']}")
-        lines.append(f"Confidence:  {hyp['confidence']}")
+        lines.append(f"Hypothesis:  {hyp.root_cause}")
+        lines.append(f"Confidence:  {hyp.confidence}")
         lines.append("Evidence:")
-        for e in hyp["evidence"]:
+        for e in hyp.evidence:
             lines.append(f"  - {e}")
         lines.append("")
 

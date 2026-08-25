@@ -4,6 +4,7 @@ load_dotenv()
 
 from graph import build_incident_graph
 from langgraph.checkpoint.sqlite import SqliteSaver
+from report import render_report
 
 ALERT = "High error rate (>20%) on checkout-service for the last 15 minutes."
 DB_PATH="incident.db"
