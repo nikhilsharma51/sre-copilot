@@ -1,4 +1,4 @@
-
+# resume.py
 import sys
 from dotenv import load_dotenv
 load_dotenv()
@@ -6,6 +6,7 @@ load_dotenv()
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.types import Command
 from graph import build_incident_graph
+from report import render_report
 
 DB_PATH = "incident.db"
 
@@ -23,11 +24,7 @@ def main():
             Command(resume={"approved": decision == "approve", "reason": reason}),
             config=config,
         )
-        print("\n--- Final timeline ---")
-        for line in result["timeline"]:
-            print("-", line)
-        if result.get("result"):
-            print("\nresult:", result["result"])
+        print(render_report(result))
 
 if __name__ == "__main__":
     main()
