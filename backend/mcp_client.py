@@ -20,7 +20,7 @@ async def mcp_session():
             yield session
 
 def _extract(result) ->object:
-    if result.is_error:
+    if result.isError:
         raise RuntimeError(f"MCP tool call failed: {result.content}")
     texts = [c.text for c in result.content if isinstance(c, TextContent)]
     if len(texts) == 1:

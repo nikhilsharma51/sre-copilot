@@ -20,7 +20,7 @@ async def main():
     async with AsyncSqliteSaver.from_conn_string(DB_PATH) as saver:
         graph = build_incident_graph(checkpointer=saver)
         config = {"configurable": {"thread_id": thread_id}}
-        result = graph.invoke(fresh_state(ALERT), config=config)
+        result = await graph.ainvoke(fresh_state(ALERT), config=config)
 
         interrupted = "__interrupt__" in result
         print(f"\nthread_id: {thread_id}")
