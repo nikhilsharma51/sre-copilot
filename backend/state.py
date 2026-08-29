@@ -6,6 +6,7 @@ from langgraph.graph.message import add_messages
 class IncidentState(TypedDict):
     messages : Annotated[list[AnyMessage],add_messages]
     alert : str
+    severity:str
     hypothesis : Optional[Hypothesis]
     proposal : Optional[dict]
     guardrail_result : Optional[dict]

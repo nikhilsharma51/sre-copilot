@@ -16,10 +16,22 @@ def get_metrics(service: str) -> dict:
 
 
 @mcp.tool()
+def get_disk_usage(service: str) -> dict:
+    """Return current disk usage for a service, if it tracks disk metrics."""
+    return ops.get_disk_usage(service)
+
+
+@mcp.tool()
 def restart_service(service: str) -> dict:
     """Restart a service."""
     return ops.restart_service(service)
 
 
+@mcp.tool()
+def clear_old_logs(service: str) -> dict:
+    """Purge old logs on a service to free disk space."""
+    return ops.clear_old_logs(service)
+
+
 if __name__ == "__main__":
-    mcp.run()  
+    mcp.run()

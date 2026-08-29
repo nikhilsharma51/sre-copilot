@@ -32,6 +32,12 @@ async def get_metrics(service : str) -> dict:
 
     return cast(dict,result) 
 
+@tool
+async def get_disk_usage(service: str) -> dict:
+    """Get disk usage for a service, if it tracks disk metrics."""
+    result = await call_mcp_tool("get_disk_usage", {"service": service})
+    return cast(dict,result)
+
 TOOLS = [get_logs,get_metrics]
 
 # class TriageState(TypedDict):
@@ -42,13 +48,15 @@ TOOLS = [get_logs,get_metrics]
 
 llm = ChatGroq(model=MODEL_NAME,temperature=0)
 llm_with_tools = llm.bind_tools(TOOLS)
-llm_structured = llm.with_structured_output(Hypothesis,method="json_schema")
+llm_structured = llm.with_structured_output(Hypothesis,method="function_calling")
 
 SYSTEM_PROMPT = (
-    "You are an SRE triage agent investigating a production alert. "
-    "Use get_logs and get_metrics to gather evidence before concluding "
-    "anything. Only call each tool once unless you have a specific reason "
-    "to call it again."
+    "You are an SRE triage agent investigating a production alert. You "
+    "have three read-only tools: get_logs, get_metrics (error rate / "
+    "latency), and get_disk_usage. Not every tool is relevant to every "
+    "alert -- read the alert text and only call the ones that plausibly "
+    "apply before concluding anything. Only call each tool once unless "
+    "you have a specific reason to call it again."  
 )
 
 

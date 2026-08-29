@@ -8,11 +8,6 @@ from mcp.client.stdio import stdio_client
 from mcp.types import TextContent
 
 
-SERVER_PARAMS = StdioServerParameters(
-    command=sys.executable,
-    args = ["-m", "mcp_server.server"],
-)
-
 SERVERS = {
     "ops": StdioServerParameters(command=sys.executable, args=["-m", "mcp_server.server"]),
     "github": StdioServerParameters(
@@ -32,7 +27,7 @@ async def mcp_session(server : str ="ops"):
      params = SERVERS.get(server)
      if params is None:
          raise ValueError(f"Unknown MCP server: {server!r}. Valid options: {list(SERVERS)}")
-     async with stdio_client(SERVER_PARAMS) as (read, write):
+     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             yield session
@@ -48,7 +43,13 @@ def _extract(result) ->object:
             return texts[0]
     return texts
 
-async def call_mcp_tool(name: str, arguments: dict, server: str = "ops") -> object:
+async def call_mcp_tool(name: str, arguments: dict, server: str ="ops" ) -> object:
     async with mcp_session(server) as session:
         result = await session.call_tool(name, arguments)
         return _extract(result)
+
+async def list_available_tools():
+    async with mcp_session("github") as session:
+        tools = await session.list_tools()
+        for t in tools.tools:
+            print(t.name, "-", t.description)

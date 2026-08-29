@@ -1,10 +1,14 @@
+
+
 from dataclasses import dataclass, asdict
 
-ALLOWED_SERVICES = {"checkout-service"}
+ALLOWED_SERVICES = {"checkout-service", "payments-worker"}
 
 DENIED_ACTIONS = {"drop_database", "delete_resource", "delete_service"}
 
+
 MAX_ACTIONS_PER_INCIDENT = 3
+
 
 @dataclass
 class GuardrailResult:
@@ -25,6 +29,9 @@ def check_guardrails(action: str, target: str, actions_so_far: int) -> Guardrail
 
 
 def guardrail_check(state) -> dict:
+    """Graph node wrapper. This is the one place remediation actions get
+    vetted before a human is even asked -- there's no path from a proposal
+    to execution that skips this node."""
     proposal = state["proposal"]
     result = check_guardrails(proposal["action"], proposal["target"], len(state["actions_taken"]))
     entry = (

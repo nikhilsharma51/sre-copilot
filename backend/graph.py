@@ -10,6 +10,25 @@ from guardrails import guardrail_check
 checkpointer = SqliteSaver
 Store = SqliteSaver
 
+def route_by_severity(state: IncidentState) -> str:
+    # P1: get a human's attention immediately, in parallel with starting
+    # to investigate. P3: investigate fully first, only loop in a human
+    # once there's an actual proposal to approve (the existing flow).
+    return "notify_immediately" if state.get("severity") == "P1" else "triage"
+
+async def notify_immediately(state: IncidentState) -> dict:
+    try:
+        await call_mcp_tool(
+            "chat_post_message",
+            {"channel": SLACK_CHANNEL,
+             "text": f":red_circle: P1 alert, investigating now: {state['alert']}"},
+            server="slack",
+        )
+    except Exception as e:
+        print(f"[warn] Slack P1 notification failed, continuing without it: {e}")
+    return {"timeline": state["timeline"] + ["P1: immediate notification sent"]}
+
+
 def route_after_guardrail(state : IncidentState) -> str:
     return "human_approval" if state["guardrail_result"]["allowed"] else "stop_incident"
 
@@ -26,12 +45,19 @@ def build_incident_graph(checkpointer=None):
     graph = StateGraph(IncidentState)
 
     graph.add_node("triage", triage_subgraph)
+    graph.add_node("notify_immediately",notify_immediately)
     graph.add_node("propose_remediation", propose_remediation)
     graph.add_node("guardrail_check", guardrail_check)
     graph.add_node("human_approval", human_approval)
     graph.add_node("execute_action", execute_action)
     graph.add_node("stop_incident", stop_incident)
-    graph.add_edge(START, "triage")
+
+    graph.add_conditional_edges(
+        START,route_by_severity,{
+            "notify_immediately" : "notify_immediately" ,"triage":"triage"
+        },
+    )
+    graph.add_edge("notify_immediately", "triage")
     graph.add_edge("triage", "propose_remediation")
     graph.add_edge("propose_remediation", "guardrail_check")
 
