@@ -1,14 +1,17 @@
 from langgraph.graph import StateGraph,START,END
 from langgraph.checkpoint.sqlite import SqliteSaver
+import os
 
 from state import IncidentState
 from process.agents.triage import build_triage_graph
 from process.agents.remediation import propose_remediation,human_approval,execute_action
 from guardrails import guardrail_check
+from mcp_client import call_mcp_tool
 
 
 checkpointer = SqliteSaver
 Store = SqliteSaver
+SLACK_CHANNEL = os.environ.get("SLACK_APPROVAL_CHANNEL", "#incidents")
 
 def route_by_severity(state: IncidentState) -> str:
     # P1: get a human's attention immediately, in parallel with starting

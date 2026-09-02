@@ -38,7 +38,7 @@ async def get_disk_usage(service: str) -> dict:
     result = await call_mcp_tool("get_disk_usage", {"service": service})
     return cast(dict,result)
 
-TOOLS = [get_logs,get_metrics]
+TOOLS = [get_logs,get_metrics,get_disk_usage]
 
 # class TriageState(TypedDict):
 #     messages : Annotated[list[AnyMessage],add_messages]
@@ -48,7 +48,7 @@ TOOLS = [get_logs,get_metrics]
 
 llm = ChatGroq(model=MODEL_NAME,temperature=0)
 llm_with_tools = llm.bind_tools(TOOLS)
-llm_structured = llm.with_structured_output(Hypothesis,method="function_calling")
+llm_structured = llm.with_structured_output(Hypothesis,method="json_schema")
 
 SYSTEM_PROMPT = (
     "You are an SRE triage agent investigating a production alert. You "
